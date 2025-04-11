@@ -1,0 +1,21 @@
+{
+    "version": 4,
+    "configurations": [
+        {
+            "name": "macOS",
+            "includePath": [
+                "${workspaceFolder}/FreeRTOS/EDF", // Your project code
+                "${workspaceFolder}/FreeRTOS/Source/include", // FreeRTOS kernel headers
+                "${workspaceFolder}/FreeRTOS/Source/portable/ThirdParty/GCC/Posix" // POSIX port (portmacro.h etc.)
+                // FreeRTOS/Source/portable/ThirdParty/GCC/Posix/portmacro.h
+            ],
+            "defines": [
+                "configUSE_POSIX_PORT=1" // or any required macro
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "macos-clang-x64"
+        }
+    ]
+}
