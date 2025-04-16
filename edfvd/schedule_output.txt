@@ -1,0 +1,6 @@
+EDF-VD Schedule from 0 to each event:
+[  0.00 ->   2.50]: Task=T1 Job=0
+[  2.50 ->   4.70]: Task=T2 Job=0
+[  4.70 ->   6.30]: Task=T3 Job=0
+[ 10.00 ->  12.70]: Task=T1 Job=1
+[ 12.70 ->  14.60]: Task=T2 Job=1

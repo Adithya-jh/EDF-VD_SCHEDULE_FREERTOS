@@ -1,0 +1,5 @@
+EDF-VD Schedule Analysis
+========================
+Number of Preemptions: 4
+Average Waiting Time:  1.98
+Average Response Time: 4.16
