@@ -9,7 +9,7 @@
  #include <string.h>
  #include <unistd.h>    // for getcwd debug
  #include <limits.h>    // for PATH_MAX
- #include "FreeRTOS.h"  // If you want, but not strictly necessary for offline code
+ #include "FreeRTOS.h"  
  #include "sim_offline_edfvd.h"
  
  #define MAX_TASKS 50
