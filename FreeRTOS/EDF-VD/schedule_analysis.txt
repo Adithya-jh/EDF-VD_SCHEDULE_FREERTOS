@@ -1,7 +1,7 @@
 EDF-VD Schedule Analysis
 ========================
-Number of tasks : 3
-Number of jobs  : 5
-Preemptions     : 4
-Avg Wait        : 1.98
-Avg Response    : 4.16
+Number of tasks : 5
+Number of jobs  : 18
+Preemptions     : 19
+Avg Wait        : 1.47
+Avg Response    : 2.74

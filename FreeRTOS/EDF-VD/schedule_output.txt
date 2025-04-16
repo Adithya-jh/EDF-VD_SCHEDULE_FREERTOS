@@ -1,6 +1,21 @@
 EDF-VD Schedule from 0 to each event:
-[  0.00 ->   2.50]: Task=T1 Job=0
-[  2.50 ->   4.70]: Task=T2 Job=0
-[  4.70 ->   6.30]: Task=T3 Job=0
-[ 10.00 ->  12.70]: Task=T1 Job=1
-[ 12.70 ->  14.60]: Task=T2 Job=1
+[  0.00 ->   1.20]: Task=T1 Job=0
+[  1.20 ->   2.20]: Task=T2 Job=0
+[  2.20 ->   2.70]: Task=T3 Job=0
+[  2.70 ->   3.90]: Task=T4 Job=0
+[  3.90 ->   4.00]: Task=T5 Job=0
+[  4.00 ->   5.10]: Task=T1 Job=1
+[  5.10 ->   5.70]: Task=T3 Job=1
+[  5.70 ->   6.60]: Task=T2 Job=1
+[  6.60 ->   8.60]: Task=T5 Job=0
+[  8.60 ->   9.90]: Task=T1 Job=2
+[  9.90 ->  11.20]: Task=T4 Job=1
+[ 11.20 ->  11.70]: Task=T3 Job=2
+[ 11.70 ->  12.80]: Task=T2 Job=2
+[ 12.80 ->  13.70]: Task=T1 Job=3
+[ 13.70 ->  14.20]: Task=T3 Job=3
+[ 14.20 ->  15.30]: Task=T4 Job=2
+[ 15.30 ->  16.00]: Task=T2 Job=3
+[ 16.00 ->  17.00]: Task=T1 Job=4
+[ 17.00 ->  17.30]: Task=T2 Job=3
+[ 17.30 ->  19.30]: Task=T5 Job=1

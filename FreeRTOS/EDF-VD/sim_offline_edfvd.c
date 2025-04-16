@@ -364,17 +364,23 @@
      double now = 0.0;
      g_numSlices = 0;
      int lastJobIndex = -1;
- 
-     printf("DEBUG: Entering scheduleEDFVD with hyperPeriod=%.2f\n", hyperPeriod);
- 
-     while(now < hyperPeriod)
+     
+     /* For testing/demo purposes, we limit the simulation to a fixed horizon.
+        If the computed hyperPeriod is huge, you may not want to simulate all the way to it.
+        Here we use a simulation limit (e.g., 1000 time units), unless the hyperPeriod is smaller.
+     */
+     double simulationLimit = (hyperPeriod < 1000.0) ? hyperPeriod : 1000.0;
+     
+     printf("DEBUG: Entering scheduleEDFVD with hyperPeriod=%.2f, simulationLimit=%.2f\n", hyperPeriod, simulationLimit);
+     
+     while(now < simulationLimit)
      {
          printf("DEBUG: scheduling loop, now=%.2f\n", now);
- 
-         /* 1) find active jobs: arrived, not finished, and has remaining time */
+  
+         /* 1) Find active jobs: tasks that have arrived, not finished, and with remaining time */
          int activeIndices[2000];
          int activeCount = 0;
-         for(int i=0; i<g_numJobs; i++){
+         for(int i = 0; i < g_numJobs; i++){
              if(!jobs[i].finished &&
                 jobs[i].arrivalTime <= now &&
                 jobs[i].remainingTime > 0.0)
@@ -382,13 +388,13 @@
                  activeIndices[activeCount++] = i;
              }
          }
- 
+  
          printf("DEBUG: activeCount=%d\n", activeCount);
- 
+  
          if(activeCount == 0) {
-             /* no active job => jump to next arrival */
-             double nextArrival = hyperPeriod;
-             for(int i=0; i<g_numJobs; i++){
+             /* No active jobs => jump to the next arrival */
+             double nextArrival = simulationLimit;  // default to simulationLimit
+             for(int i = 0; i < g_numJobs; i++){
                  if(!jobs[i].finished && jobs[i].arrivalTime > now){
                      if(jobs[i].arrivalTime < nextArrival){
                          nextArrival = jobs[i].arrivalTime;
@@ -396,131 +402,90 @@
                  }
              }
              printf("DEBUG: nextArrival=%.2f\n", nextArrival);
- 
-             if(nextArrival > now && nextArrival < hyperPeriod){
+  
+             if(nextArrival > now && nextArrival < simulationLimit){
                  now = nextArrival;
-                 continue; 
+                 continue;
              } else {
-                 printf("DEBUG: no more arrivals or nextArrival >= hyperPeriod => break\n");
+                 printf("DEBUG: No more arrivals or nextArrival >= simulationLimit => break\n");
                  break;
              }
          }
- 
-         /* 2) among active, pick earliest VDL (if >1 active) */
+  
+         /* 2) Among active jobs, choose the one with the earliest virtual deadline */
+         int chosenIndex = -1;
          if(activeCount > 1){
              Job_t tmp[2000];
-             for(int i=0; i<activeCount; i++){
+             for (int i = 0; i < activeCount; i++){
                  tmp[i] = jobs[activeIndices[i]];
              }
              qsort(tmp, activeCount, sizeof(Job_t), compareVDL);
- 
-             /* The first in tmp is earliest. Find which one in 'jobs' it matches. */
-             int chosenIndex = -1;
-             for(int i=0; i<activeCount; i++){
-                 if( jobs[activeIndices[i]].virtualDeadline == tmp[0].virtualDeadline &&
-                     jobs[activeIndices[i]].taskIndex == tmp[0].taskIndex &&
-                     jobs[activeIndices[i]].jobId == tmp[0].jobId )
+  
+             /* Find which job from activeIndices matches the earliest result */
+             for(int i = 0; i < activeCount; i++){
+                 if(jobs[activeIndices[i]].virtualDeadline == tmp[0].virtualDeadline &&
+                    jobs[activeIndices[i]].taskIndex == tmp[0].taskIndex &&
+                    jobs[activeIndices[i]].jobId == tmp[0].jobId)
                  {
                      chosenIndex = activeIndices[i];
                      break;
                  }
              }
-             if(chosenIndex < 0) {
+             if(chosenIndex < 0){
                  printf("ERROR: could not match chosen job.\n");
                  break;
              }
- 
-             /* next completion time or next arrival => next decision. */
-             double remain = jobs[chosenIndex].remainingTime;
-             double nextArrival = hyperPeriod;
-             for(int k=0; k<g_numJobs; k++){
-                 if(!jobs[k].finished && jobs[k].arrivalTime > now){
-                     if(jobs[k].arrivalTime < nextArrival){
-                         nextArrival = jobs[k].arrivalTime;
-                     }
-                 }
-             }
-             double finishIfUninterrupted = now + remain;
-             double nextDecision = (nextArrival < finishIfUninterrupted) ? nextArrival : finishIfUninterrupted;
- 
-             /* If we changed job => new scheduling slice. */
-             if(chosenIndex != lastJobIndex){
-                 g_numSlices++;
-                 if(g_numSlices >= 10000) {
-                     printf("ERROR: slices array full.\n");
-                     return;
-                 }
-                 slices[g_numSlices-1].start     = now;
-                 slices[g_numSlices-1].taskIndex = jobs[chosenIndex].taskIndex;
-                 slices[g_numSlices-1].jobId     = jobs[chosenIndex].jobId;
-                 lastJobIndex = chosenIndex;
-             }
- 
-             slices[g_numSlices-1].end = nextDecision;
- 
-             /* run chosen job from now to nextDecision */
-             double delta = nextDecision - now;
-             jobs[chosenIndex].remainingTime -= delta;
-             if(jobs[chosenIndex].startTime < 0) {
-                 jobs[chosenIndex].startTime = now;
-             }
- 
-             now = nextDecision;
- 
-             /* if the job is now finished */
-             if(jobs[chosenIndex].remainingTime <= 1e-9){
-                 jobs[chosenIndex].finished = 1;
-                 jobs[chosenIndex].finishTime = now;
-                 printf("DEBUG: Job finished => T=%d, jobId=%d at time=%.2f\n",
-                        jobs[chosenIndex].taskIndex, jobs[chosenIndex].jobId, now);
-             }
          }
          else {
-             /* Only one active job => simpler. */
-             int chosenIndex = activeIndices[0];
-             double remain = jobs[chosenIndex].remainingTime;
- 
-             double nextArrival = hyperPeriod;
-             for(int k=0; k<g_numJobs; k++){
-                 if(!jobs[k].finished && jobs[k].arrivalTime > now){
-                     if(jobs[k].arrivalTime < nextArrival){
-                         nextArrival = jobs[k].arrivalTime;
-                     }
+             chosenIndex = activeIndices[0];
+         }
+  
+         /* 3) Determine how long to run the chosen job before the next decision */
+         double remain = jobs[chosenIndex].remainingTime;
+         double nextArrival = simulationLimit;
+         for(int k = 0; k < g_numJobs; k++){
+             if(!jobs[k].finished && jobs[k].arrivalTime > now){
+                 if(jobs[k].arrivalTime < nextArrival){
+                     nextArrival = jobs[k].arrivalTime;
                  }
              }
-             double finishIfUninterrupted = now + remain;
-             double nextDecision = (nextArrival < finishIfUninterrupted) ? nextArrival : finishIfUninterrupted;
- 
-             if(chosenIndex != lastJobIndex){
-                 g_numSlices++;
-                 if(g_numSlices >= 10000) {
-                     printf("ERROR: slices array full.\n");
-                     return;
-                 }
-                 slices[g_numSlices-1].start     = now;
-                 slices[g_numSlices-1].taskIndex = jobs[chosenIndex].taskIndex;
-                 slices[g_numSlices-1].jobId     = jobs[chosenIndex].jobId;
-                 lastJobIndex = chosenIndex;
+         }
+         double finishIfUninterrupted = now + remain;
+         double nextDecision = (nextArrival < finishIfUninterrupted) ? nextArrival : finishIfUninterrupted;
+  
+         /* Record a new scheduling slice if the job changes. */
+         if(chosenIndex != lastJobIndex){
+             g_numSlices++;
+             if(g_numSlices >= 10000) {
+                 printf("ERROR: slices array full.\n");
+                 return;
              }
-             slices[g_numSlices-1].end = nextDecision;
- 
-             double delta = nextDecision - now;
-             jobs[chosenIndex].remainingTime -= delta;
-             if(jobs[chosenIndex].startTime < 0) {
-                 jobs[chosenIndex].startTime = now;
-             }
- 
-             now = nextDecision;
- 
-             if(jobs[chosenIndex].remainingTime <= 1e-9){
-                 jobs[chosenIndex].finished = 1;
-                 jobs[chosenIndex].finishTime = now;
-                 printf("DEBUG: Job finished => T=%d, jobId=%d at time=%.2f\n",
-                        jobs[chosenIndex].taskIndex, jobs[chosenIndex].jobId, now);
-             }
+             slices[g_numSlices - 1].start = now;
+             slices[g_numSlices - 1].taskIndex = jobs[chosenIndex].taskIndex;
+             slices[g_numSlices - 1].jobId = jobs[chosenIndex].jobId;
+             lastJobIndex = chosenIndex;
+         }
+  
+         slices[g_numSlices - 1].end = nextDecision;
+  
+         /* Run the chosen job from now to nextDecision */
+         double delta = nextDecision - now;
+         jobs[chosenIndex].remainingTime -= delta;
+         if(jobs[chosenIndex].startTime < 0)
+             jobs[chosenIndex].startTime = now;
+  
+         now = nextDecision;
+  
+         /* Check if the job is finished and record its finish time */
+         if(jobs[chosenIndex].remainingTime <= 1e-9){
+             jobs[chosenIndex].finished = 1;
+             jobs[chosenIndex].finishTime = now;
+             printf("DEBUG: Job finished => T=%d, jobId=%d at time=%.2f\n",
+                    jobs[chosenIndex].taskIndex, jobs[chosenIndex].jobId, now);
          }
      }
  }
+ 
  
  /*-----------------------------------------------------------
   * writeScheduleToFile
