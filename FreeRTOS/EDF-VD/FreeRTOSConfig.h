@@ -22,11 +22,11 @@
 
 /* Minimal stack size in words (not bytes).
    For POSIX demos, set it to a higher value if you see warnings about stack. */
-#define configMINIMAL_STACK_SIZE ( ( unsigned short ) 8192 )
+#define configMINIMAL_STACK_SIZE ( ( unsigned short ) 8192 ) 
 
 /* Total heap size used by the kernel (for dynamic allocation).
    If you use heap_4.c or heap_5.c, adjust accordingly. */
-#define configTOTAL_HEAP_SIZE                   ( ( size_t ) ( 20 * 1024 ) )
+#define configTOTAL_HEAP_SIZE ( ( size_t ) ( 256 * 1024 ) )
 
 /* Maximum number of task priorities. 
    You can raise this if you need more priority levels. */
